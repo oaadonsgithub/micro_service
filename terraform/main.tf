@@ -118,6 +118,7 @@ resource "aws_lb_target_group" "web_tg" {
 
   health_check {
     path                = "/health"
+    protocol            = "HTTP"
     port                = "traffic-port"
     matcher             = "200"
     interval            = 30
@@ -136,5 +137,10 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web_tg.arn
   }
+}
+
+resource "aws_autoscaling_attachment" "asg_alb_attachment" {
+  autoscaling_group_name = aws_autoscaling_group.web_asg.name
+  lb_target_group_arn   = aws_lb_target_group.web_tg.arn
 }
 
