@@ -13,6 +13,37 @@ resource "aws_launch_template" "web" {
     security_groups             = [aws_security_group.web_sg.id]
   }
 
+
+
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    apt-get update
+    apt-get install -y nginx nodejs npm
+    # Your Node.js app setup
+    git clone https://github.com/oaadonsgithub/micro_service.git /var/www/app
+    cd /var/www/app
+    npm install
+    nohup npm start &
+
+    # NGINX config
+    cat > /etc/nginx/sites-available/default <<EOL
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade \$http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host \$host;
+            proxy_cache_bypass \$http_upgrade;
+        }
+    }
+    EOL
+
+    systemctl restart nginx
+  EOF
+  )
+
   tag_specifications {
     resource_type = "instance"
     tags = {
