@@ -32,6 +32,9 @@ jobs:
           ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           IMAGE_NAME: ${{ secrets.ECR_REPO_NAME }}
         run: |
+          echo "ECR_REGISTRY=$ECR_REGISTRY"
+          echo "IMAGE_NAME=$IMAGE_NAME"
           IMAGE_URI=$ECR_REGISTRY/$IMAGE_NAME:latest
+          echo "IMAGE_URI=$IMAGE_URI"
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
