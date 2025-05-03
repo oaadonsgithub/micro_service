@@ -13,6 +13,16 @@ resource "aws_launch_template" "web" {
     security_groups             = [aws_security_group.web_sg.id]
   }
 
+  block_device_mappings {
+    device_name = "/dev/sda1"  # This is the root volume device for Amazon Linux/Ubuntu
+
+    ebs {
+      volume_size           = 50  # <-- Set your desired size in GiB here
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
+  }
+
   user_data = base64encode(<<-EOF
     #!/bin/bash
     apt-get update
