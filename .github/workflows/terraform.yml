@@ -41,7 +41,8 @@ jobs:
             -var="aws_account_region=${{ secrets.AWS_REGION }}" \
             -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" \
             -var="key_name=${{ secrets.KEY_NAME }}"  \
-            -var="lb_target_group_443_name=${{ secrets.LB_TG_443_NAME }}"
+            -var="lb_target_group_443_name=${{ secrets.LB_TG_443_NAME }}" \
+            -var="region=${{ secrets.AWS_REGION }}" 
 
 
       - name: Terraform Apply
