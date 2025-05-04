@@ -2,6 +2,9 @@ name: Deploy to ECS
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -30,7 +33,16 @@ jobs:
         run: |
           TASK_DEF_ARN=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE             | jq -r '.services[0].taskDefinition')
 
-          aws ecs describe-task-definition --task-definition $TASK_DEF_ARN             | jq 'del(.taskDefinition.taskDefinitionArn, .taskDefinition.revision, .taskDefinition.status, .taskDefinition.requiresAttributes, .taskDefinition.compatibilities, .taskDefinition.registeredAt, .taskDefinition.registeredBy)
+          aws ecs describe-task-definition --task-definition $TASK_DEF_ARN             | jq 'del(
+                .taskDefinition.taskDefinitionArn,
+                .taskDefinition.revision,
+                .taskDefinition.status,
+                .taskDefinition.requiresAttributes,
+                .taskDefinition.compatibilities,
+                .taskDefinition.registeredAt,
+                .taskDefinition.registeredBy,
+                .taskDefinition.deregisteredAt
+              )
               | .taskDefinition
               | with_entries(select(.value != null))' > new-task-def.json
 
