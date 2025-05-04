@@ -35,3 +35,8 @@ variable "certificate_arn" {
   description = "The ARN of the SSL/TLS certificate for the HTTPS listener"
   type        = string
 }
+
+variable "subnet_ids" {
+  description = "List of subnet IDs"
+  type        = list(string)
+}
