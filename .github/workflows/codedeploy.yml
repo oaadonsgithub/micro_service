@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload and Deploy via CodeDeploy
         if: ${{ steps.extract_branch.outputs.branch == 'main' }}
-        run: aws deploy create-deployment --application-name frontend-deploy --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name frontend-deploy-group --s3-location bucket=mynodeapplicationbucket,key=code.zip,bundleType=zip
+        run: aws deploy create-deployment --application-name frontend-deploy --deployment-config-name CodeDeployDefault.ECSAllAtOnce --deployment-group-name frontend-deploy-group --s3-location bucket=mynodeapplicationbucket,key=code.zip,bundleType=zip
 
 
           echo "Waiting for deployment to complete..."
