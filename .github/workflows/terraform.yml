@@ -38,7 +38,8 @@ jobs:
           terraform plan \
             -var="ami_id=ami-0c12f1613ee864d3f" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
-            -var="aws_account_region=${{ secrets.AWS_REGION }}"
+            -var="aws_account_region=${{ secrets.AWS_REGION }}" \
+            -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}"
 
 
       - name: Terraform Apply
