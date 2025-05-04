@@ -34,7 +34,11 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -var="ami_id=ami-0c12f1613ee864d3f"
+        run: |
+          terraform plan \
+            -var="ami_id=ami-0c12f1613ee864d3f" \
+            -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}"
 
+            
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="ami_id=ami-0c12f1613ee864d3f"
