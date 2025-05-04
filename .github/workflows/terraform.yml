@@ -39,7 +39,8 @@ jobs:
             -var="ami_id=ami-0c12f1613ee864d3f" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -var="aws_account_region=${{ secrets.AWS_REGION }}" \
-            -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}"
+            -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" \
+            -var="key_name=${{ secrets.KEY_NAME }}"
 
 
       - name: Terraform Apply
