@@ -58,8 +58,9 @@ jobs:
       - name: Register and Deploy ECS task with CodeDeploy
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          application-name: "frontend-deploy"
-          deployment-group: frontend-deploy-group
+          codedeploy-application: frontend-deploy
+          codedeploy-deployment-group: frontend-deploy-group
+          codedeploy-deployment-config: CodeDeployDefault.ECSAllAtOnce
           task-definition: frontend-task-def.json
           service: frontend
           cluster: application_cluster
