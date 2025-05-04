@@ -2,10 +2,6 @@ name: Terraform Infrastructure Deployment
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
- 
 
 jobs:
   terraform:
