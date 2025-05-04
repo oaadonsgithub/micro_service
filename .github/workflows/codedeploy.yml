@@ -39,24 +39,4 @@ jobs:
         if: ${{ steps.extract_branch.outputs.branch == 'main' }}
         run: aws deploy create-deployment --application-name frontend-deploy --deployment-config-name CodeDeployDefault.ECSAllAtOnce --deployment-group-name frontend-deploy-group --revision '{"s3Location": { "bucket": "mynodeapplicationbucket", "key": "code.zip",."bundleType": "zip"}}'
 
-      - name: Upload and Deploy via CodeDeploy
-        if: ${{ steps.extract_branch.outputs.branch == 'main' }}
-        run: |
-          REVISION_JSON=$(jq -n \
-            --arg bucket "mynodeapplicationbucket" \
-            --arg key "code.zip" \
-            '{revisionType: "S3", s3Location: {bucket: $bucket, key: $key, bundleType: "zip"}}')
-
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name frontend-deploy \
-            --deployment-group-name frontend-deploy-group \
-            --deployment-config-name CodeDeployDefault.ECSAllAtOnce \
-            --revision "$REVISION_JSON" \
-            --description "Deploy main branch via GitHub Actions" \
-            | jq -r '.deploymentId')
-
-          echo "Waiting for deployment to complete..."
-          aws deploy wait deployment-successful --deployment-id "$DEPLOYMENT_ID"
-
-          echo "Deployment completed!"
-          aws deploy get-deployment --deployment-id "$DEPLOYMENT_ID"
+     
