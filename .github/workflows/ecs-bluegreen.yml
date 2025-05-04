@@ -25,7 +25,7 @@ jobs:
           cat <<EOF > frontend-task-def.json
           {
             "family": "frontend-task",
-            "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+            "executionRoleArn": "arn:aws:iam::537124950459:role/CodeDeploy-Service-role",
             "networkMode": "bridge",
             "containerDefinitions": [
               {
