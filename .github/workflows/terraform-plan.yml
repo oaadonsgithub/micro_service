@@ -43,10 +43,10 @@ jobs:
           speculative: true
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -chdir=$CONFIG_DIRECTORY init
 
       - name: Terraform Validate
-        run: terraform validate
+        run: terraform validate -chdir=$CONFIG_DIRECTORY init
 
       - name: Create Plan Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
