@@ -1,13 +1,13 @@
+---
 version: 1
 Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: "{{TASK_DEFINITION}}"
+        TaskDefinition: "REPLACE_TASK_DEFINITION"
         LoadBalancerInfo:
           ContainerName: "web"
           ContainerPort: 80
-        PlatformVersion: "LATEST"
 
 Hooks:
   BeforeInstall:
