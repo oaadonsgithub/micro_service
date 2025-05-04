@@ -1,0 +1,44 @@
+name: Deploy via CodeDeploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  codedeploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload appspec and scripts to S3
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          ARCHIVE_NAME=deployment-$TIMESTAMP.zip
+          BUCKET=${{ secrets.S3_BUCKET_NAME }}
+          zip -r $ARCHIVE_NAME appspec.yaml scripts/
+          aws s3 cp $ARCHIVE_NAME s3://$BUCKET/$ARCHIVE_NAME
+          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+
+      - name: Trigger CodeDeploy Deployment and Monitor
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment             --application-name frontend-deploy             --deployment-group-name frontend-deploy-group             --deployment-config-name CodeDeployDefault.ECSAllAtOnce             --revision revisionType=S3,s3Location={bucket=${{ secrets.S3_BUCKET_NAME }},key=$ARCHIVE_NAME,bundleType=zip}             --description "Deploy from GitHub Actions with AppSpec"             | jq -r '.deploymentId')
+
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+          echo "Waiting for deployment to complete..."
+          aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
+
+          echo "Deployment completed successfully!"
+          aws deploy get-deployment --deployment-id $DEPLOYMENT_ID
