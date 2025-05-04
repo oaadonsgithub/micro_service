@@ -1,4 +1,4 @@
-name: ECS Blue/Green Deploy via CodeDeploy (S3 ZIP)
+name: ECS Blue/Green Deployment with CodeDeployToECS
 
 on:
   workflow_dispatch:
@@ -12,37 +12,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up AWS credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Package AppSpec and scripts into ZIP
+      
+      - name: Generate ECS task definition
         run: |
-          mkdir -p bundle/scripts
-          cp appspec.yaml bundle/
-          cp scripts/*.sh bundle/scripts/
-          cd bundle
-          zip -r ../code.zip .
-          cd ..
-
-      - name: Upload ZIP to S3
-        run: |
-          aws s3 cp code.zip s3://${{ secrets.S3_BUCKET_NAME }}/code.zip
-
-      - name: Trigger CodeDeploy Deployment
-        run: |
-          aws deploy create-deployment \
-            --application-name frontend-deploy \
-            --deployment-group-name frontend-deploy-group \
-            --deployment-config-name CodeDeployDefault.ECSAllAtOnce \
-            --revision '{
-              "revisionType": "S3",
-              "s3Location": {
-                "bucket": "${{ secrets.S3_BUCKET_NAME }}",
-                "key": "code.zip",
-                "bundleType": "zip"
+          cat <<EOF > frontend-task-def.json
+          {
+            "family": "frontend-task",
+            "executionRoleArn": "arn:aws:iam::537124950459:role/CodeDeploy-Service-role",
+            "networkMode": "bridge",
+            "containerDefinitions": [
+              {
+                "name": "web",
+                "image": "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/web-ecr-repository:latest",
+                "portMappings": [
+                  {
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp"
+                  }
+                ],
+                "essential": true,
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "/ecs/frontend",
+                    "awslogs-region": "${{ secrets.AWS_REGION }}",
+                    "awslogs-stream-prefix": "ecs"
+                  }
+                }
               }
-            }'
+            ],
+            "requiresCompatibilities": ["EC2"],
+            "cpu": "512",
+            "memory": "1024"
+          }
+          EOF
+
+      - name: Register and Deploy ECS task with CodeDeploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          codedeploy-application: frontend-deploy
+          codedeploy-deployment-group: frontend-deploy-group
+          codedeploy-deployment-config: CodeDeployDefault.ECSAllAtOnce
+          task-definition: frontend-task-def.json
+          service: frontend
+          cluster: application_cluster
+          wait-for-service-stability: true
