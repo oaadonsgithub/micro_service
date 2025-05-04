@@ -43,6 +43,7 @@ jobs:
             -var="key_name=${{ secrets.KEY_NAME }}"  \
             -var="lb_target_group_443_name=${{ secrets.LB_TG_443_NAME }}" \
             -var="region=${{ secrets.AWS_REGION }}" \
+            -var="subnet_ids=${{ secrets.SUBNET_IDS }}" \
             -var="vpc_id=${{ secrets.VPC_ID }}"
 
 
