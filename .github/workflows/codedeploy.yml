@@ -2,9 +2,6 @@ name: Deploy via CodeDeploy
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   codedeploy:
@@ -22,6 +19,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Upload appspec and scripts to S3
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
@@ -33,7 +33,7 @@ jobs:
 
       - name: Trigger CodeDeploy Deployment and Monitor
         run: |
-          DEPLOYMENT_ID=$(aws deploy create-deployment             --application-name frontend-deploy             --deployment-group-name frontend-deploy-group             --deployment-config-name CodeDeployDefault.ECSAllAtOnce             --revision revisionType=S3,s3Location={bucket=${{ secrets.S3_BUCKET_NAME }},key=$ARCHIVE_NAME,bundleType=zip}             --description "Deploy from GitHub Actions with AppSpec"             | jq -r '.deploymentId')
+          DEPLOYMENT_ID=$(aws deploy create-deployment             --application-name frontend-deploy             --deployment-group-name frontend-deploy-group             --deployment-config-name CodeDeployDefault.ECSAllAtOnce             --revision "$(jq -n               --arg bucket "${{ secrets.S3_BUCKET_NAME }}"               --arg key "$ARCHIVE_NAME"               '{revisionType: "S3", s3Location: {bucket: $bucket, key: $key, bundleType: "zip"}}')"             --description "Deploy from GitHub Actions with AppSpec"             | jq -r '.deploymentId')
 
           echo "Deployment ID: $DEPLOYMENT_ID"
 
