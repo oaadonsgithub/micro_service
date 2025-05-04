@@ -1,14 +1,12 @@
 name: Deploy to ECS
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -21,19 +19,29 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Register New Task Definition and Update ECS Service
         env:
           CLUSTER: application_cluster
           SERVICE: frontend
           IMAGE_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:latest
         run: |
-          # Get the current task definition
-          TASK_DEF=$(aws ecs describe-task-definition --task-definition $SERVICE)
-          NEW_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | {containerDefinitions} | .containerDefinitions[0].image = $IMAGE | {family, networkMode, containerDefinitions, requiresCompatibilities, cpu, memory, executionRoleArn}')
-          echo $NEW_DEF > new-task-def.json
+          aws ecs describe-task-definition --task-definition $SERVICE             | jq '.taskDefinition |
+              {
+                family,
+                networkMode,
+                containerDefinitions,
+                requiresCompatibilities,
+                cpu,
+                memory,
+                executionRoleArn,
+                taskRoleArn
+              }' > new-task-def.json
 
-          # Register new task definition
-          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json | jq -r '.taskDefinition.taskDefinitionArn')
+          jq --arg IMAGE "$IMAGE_URI"             '.containerDefinitions[0].image = $IMAGE' new-task-def.json > tmp.json && mv tmp.json new-task-def.json
 
-          # Update ECS service to use new task definition
-          aws ecs update-service --cluster $CLUSTER --service $SERVICE --task-definition $TASK_DEF_ARN
+          TASK_DEF_ARN=$(aws ecs register-task-definition             --cli-input-json file://new-task-def.json             | jq -r '.taskDefinition.taskDefinitionArn')
+
+          aws ecs update-service --cluster $CLUSTER             --service $SERVICE             --task-definition $TASK_DEF_ARN
