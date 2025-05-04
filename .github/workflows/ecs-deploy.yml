@@ -1,0 +1,37 @@
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Register New Task Definition and Update ECS Service
+        env:
+          CLUSTER: application_cluster
+          SERVICE: frontend
+          IMAGE_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:latest
+        run: |
+          # Get the current task definition
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition $SERVICE)
+          NEW_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | {containerDefinitions} | .containerDefinitions[0].image = $IMAGE | {family, networkMode, containerDefinitions, requiresCompatibilities, cpu, memory, executionRoleArn}')
+          echo $NEW_DEF > new-task-def.json
+
+          # Register new task definition
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json | jq -r '.taskDefinition.taskDefinitionArn')
+
+          # Update ECS service to use new task definition
+          aws ecs update-service --cluster $CLUSTER --service $SERVICE --task-definition $TASK_DEF_ARN
