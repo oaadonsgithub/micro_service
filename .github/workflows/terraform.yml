@@ -37,8 +37,9 @@ jobs:
         run: |
           terraform plan \
             -var="ami_id=ami-0c12f1613ee864d3f" \
-            -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}"
+            -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="aws_account_region=${{ secrets.AWS_REGION }}"
 
-            
+
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="ami_id=ami-0c12f1613ee864d3f"
