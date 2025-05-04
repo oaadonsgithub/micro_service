@@ -1,7 +1,13 @@
-provider "aws" {
-  region = "us-west-1"
-}
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "5.94.1"
+    }
+  }
 
+   required_version = ">= 1.0.0"  # Optional version constraint
+}
 resource "aws_launch_template" "web" {
   name_prefix   = "web-launch-"
   image_id      = var.ami_id
