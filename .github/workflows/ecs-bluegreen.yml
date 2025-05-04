@@ -56,7 +56,7 @@ jobs:
           EOF
 
       - name: Register and Deploy ECS task with CodeDeploy
-        uses: aws-actions/aws-codedeploy-to-ecs@main
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           application-name: frontend-deploy
           deployment-group: frontend-deploy-group
